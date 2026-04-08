@@ -1,0 +1,1271 @@
+basePath: /api/v1
+definitions:
+  models.Course:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.CourseProgress:
+    properties:
+      completed_count:
+        type: integer
+      course_id:
+        type: integer
+      course_title:
+        type: string
+      percentage:
+        type: number
+      total_lessons:
+        type: integer
+    type: object
+  models.CreateCourseRequest:
+    properties:
+      description:
+        maxLength: 5000
+        minLength: 1
+        type: string
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - description
+    - title
+    type: object
+  models.CreateLessonRequest:
+    properties:
+      content:
+        minLength: 1
+        type: string
+      order_index:
+        minimum: 0
+        type: integer
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - content
+    - title
+    type: object
+  models.CreateSubmissionRequest:
+    properties:
+      code:
+        minLength: 1
+        type: string
+    required:
+    - code
+    type: object
+  models.CreateTaskRequest:
+    properties:
+      description:
+        minLength: 1
+        type: string
+      difficulty:
+        allOf:
+        - $ref: '#/definitions/models.Difficulty'
+        enum:
+        - easy
+        - medium
+        - hard
+      initial_code:
+        type: string
+      test_cases:
+        items:
+          $ref: '#/definitions/models.TestCase'
+        minItems: 1
+        type: array
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - description
+    - difficulty
+    - test_cases
+    - title
+    type: object
+  models.Difficulty:
+    enum:
+    - easy
+    - medium
+    - hard
+    type: string
+    x-enum-varnames:
+    - DifficultyEasy
+    - DifficultyMedium
+    - DifficultyHard
+  models.ErrorBody:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  models.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/models.ErrorBody'
+    type: object
+  models.Lesson:
+    properties:
+      content:
+        type: string
+      course_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      order_index:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.PaginatedResponse:
+    properties:
+      data: {}
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  models.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  models.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      password:
+        maxLength: 128
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  models.Role:
+    enum:
+    - student
+    - admin
+    type: string
+    x-enum-varnames:
+    - RoleStudent
+    - RoleAdmin
+  models.Submission:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+      result:
+        type: string
+      score:
+        type: integer
+      status:
+        $ref: '#/definitions/models.SubmissionStatus'
+      submitted_at:
+        type: string
+      task_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  models.SubmissionStatus:
+    enum:
+    - pending
+    - passed
+    - failed
+    type: string
+    x-enum-varnames:
+    - StatusPending
+    - StatusPassed
+    - StatusFailed
+  models.Task:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      difficulty:
+        $ref: '#/definitions/models.Difficulty'
+      id:
+        type: integer
+      initial_code:
+        type: string
+      lesson_id:
+        type: integer
+      test_cases:
+        items:
+          type: object
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.TestCase:
+    properties:
+      expected:
+        type: string
+      input:
+        type: string
+    type: object
+  models.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  models.UpdateCourseRequest:
+    properties:
+      description:
+        maxLength: 5000
+        minLength: 1
+        type: string
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    type: object
+  models.UpdateLessonRequest:
+    properties:
+      content:
+        minLength: 1
+        type: string
+      order_index:
+        minimum: 0
+        type: integer
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    type: object
+  models.UpdateTaskRequest:
+    properties:
+      description:
+        minLength: 1
+        type: string
+      difficulty:
+        allOf:
+        - $ref: '#/definitions/models.Difficulty'
+        enum:
+        - easy
+        - medium
+        - hard
+      initial_code:
+        type: string
+      test_cases:
+        items:
+          $ref: '#/definitions/models.TestCase'
+        minItems: 1
+        type: array
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    type: object
+  models.UpdateUserRequest:
+    properties:
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+    type: object
+  models.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      role:
+        $ref: '#/definitions/models.Role'
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Online programming learning platform API
+  title: Diplom API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT tokens
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Login
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get new access and refresh tokens using a valid refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Refresh tokens
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new student account
+      parameters:
+      - description: Registration data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Auth
+  /courses:
+    get:
+      description: Get a paginated list of courses
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Search by title or description
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PaginatedResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List courses
+      tags:
+      - Courses
+    post:
+      consumes:
+      - application/json
+      description: Create a new course
+      parameters:
+      - description: Course data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateCourseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Course'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a course (admin)
+      tags:
+      - Courses
+  /courses/{course_id}/lessons:
+    get:
+      description: Get a paginated list of lessons for a course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PaginatedResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List lessons in a course
+      tags:
+      - Lessons
+    post:
+      consumes:
+      - application/json
+      description: Create a new lesson in a course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: integer
+      - description: Lesson data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateLessonRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Lesson'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a lesson (admin)
+      tags:
+      - Lessons
+  /courses/{course_id}/progress:
+    get:
+      description: Get the authenticated user's progress for a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CourseProgress'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get course progress
+      tags:
+      - Progress
+  /courses/{id}:
+    delete:
+      description: Delete course by ID
+      parameters:
+      - description: Course ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a course (admin)
+      tags:
+      - Courses
+    get:
+      description: Get course by ID
+      parameters:
+      - description: Course ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Course'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a course
+      tags:
+      - Courses
+    put:
+      consumes:
+      - application/json
+      description: Update course by ID
+      parameters:
+      - description: Course ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateCourseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Course'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a course (admin)
+      tags:
+      - Courses
+  /lessons/{id}:
+    delete:
+      description: Delete lesson by ID
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a lesson (admin)
+      tags:
+      - Lessons
+    get:
+      description: Get lesson by ID
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Lesson'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a lesson
+      tags:
+      - Lessons
+    put:
+      consumes:
+      - application/json
+      description: Update lesson by ID
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateLessonRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Lesson'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a lesson (admin)
+      tags:
+      - Lessons
+  /lessons/{lesson_id}/tasks:
+    get:
+      description: Get a paginated list of tasks for a lesson
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: lesson_id
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PaginatedResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List tasks in a lesson
+      tags:
+      - Tasks
+    post:
+      consumes:
+      - application/json
+      description: Create a new task in a lesson
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: lesson_id
+        required: true
+        type: integer
+      - description: Task data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Task'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a task (admin)
+      tags:
+      - Tasks
+  /progress:
+    get:
+      description: Get the authenticated user's progress across all courses
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.CourseProgress'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all progress
+      tags:
+      - Progress
+  /submissions:
+    get:
+      description: Get a paginated list of all submissions
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PaginatedResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all submissions (admin)
+      tags:
+      - Submissions
+  /submissions/{id}:
+    get:
+      description: Get submission by ID
+      parameters:
+      - description: Submission ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Submission'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a submission
+      tags:
+      - Submissions
+  /tasks/{id}:
+    delete:
+      description: Delete task by ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a task (admin)
+      tags:
+      - Tasks
+    get:
+      description: Get task by ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Task'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a task
+      tags:
+      - Tasks
+    put:
+      consumes:
+      - application/json
+      description: Update task by ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Task'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a task (admin)
+      tags:
+      - Tasks
+  /tasks/{task_id}/submissions:
+    get:
+      description: Get a paginated list of the authenticated user's submissions for
+        a task
+      parameters:
+      - description: Task ID
+        in: path
+        name: task_id
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PaginatedResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List own submissions for a task
+      tags:
+      - Submissions
+    post:
+      consumes:
+      - application/json
+      description: Submit code for a task
+      parameters:
+      - description: Task ID
+        in: path
+        name: task_id
+        required: true
+        type: integer
+      - description: Submission data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateSubmissionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Submission'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit a solution
+      tags:
+      - Submissions
+  /users:
+    get:
+      description: Get a paginated list of all users
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Search by name or email
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PaginatedResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List users (admin)
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      description: Delete a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user (admin)
+      tags:
+      - Users
+  /users/me:
+    get:
+      description: Get the profile of the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update the profile of the authenticated user
+      parameters:
+      - description: Update data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update current user
+      tags:
+      - Users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
