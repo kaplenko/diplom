@@ -104,6 +104,8 @@ func main() {
 
 		// Progress
 		protected.GET("/courses/:course_id/progress", progressH.GetCourseProgress)
+		protected.GET("/courses/:course_id/lessons/progress", progressH.GetCourseLessonProgress)
+		protected.GET("/lessons/:lesson_id/progress", progressH.GetLessonProgress)
 		protected.GET("/progress", progressH.GetAllProgress)
 	}
 

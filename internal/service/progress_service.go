@@ -36,3 +36,18 @@ func (s *ProgressService) GetCourseProgress(userID, courseID int64) (*models.Cou
 func (s *ProgressService) GetAllProgress(userID int64) ([]models.CourseProgress, error) {
 	return s.repo.GetAllProgress(userID)
 }
+
+func (s *ProgressService) GetLessonProgress(userID, lessonID int64) (*models.LessonProgress, error) {
+	lp, err := s.repo.GetLessonProgress(userID, lessonID)
+	if err != nil {
+		return nil, fmt.Errorf("get lesson progress: %w", err)
+	}
+	if lp == nil {
+		return nil, ErrNotFound
+	}
+	return lp, nil
+}
+
+func (s *ProgressService) GetCourseLessonProgress(userID, courseID int64) ([]models.LessonProgress, error) {
+	return s.repo.GetCourseLessonProgress(userID, courseID)
+}

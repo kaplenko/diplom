@@ -24,7 +24,7 @@ definitions:
       course_title:
         type: string
       percentage:
-        type: number
+        type: integer
       total_lessons:
         type: integer
     type: object
@@ -133,6 +133,19 @@ definitions:
         type: string
       updated_at:
         type: string
+    type: object
+  models.LessonProgress:
+    properties:
+      completed_tasks:
+        type: integer
+      lesson_id:
+        type: integer
+      lesson_title:
+        type: string
+      percentage:
+        type: integer
+      total_tasks:
+        type: integer
     type: object
   models.LoginRequest:
     properties:
@@ -567,6 +580,34 @@ paths:
       summary: Create a lesson (admin)
       tags:
       - Lessons
+  /courses/{course_id}/lessons/progress:
+    get:
+      description: Get task completion for every lesson in a course, each with a 0-100
+        percentage
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.LessonProgress'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get per-lesson progress for a course
+      tags:
+      - Progress
   /courses/{course_id}/progress:
     get:
       description: Get the authenticated user's progress for a specific course
@@ -802,6 +843,36 @@ paths:
       summary: Update a lesson (admin)
       tags:
       - Lessons
+  /lessons/{lesson_id}/progress:
+    get:
+      description: Get the authenticated user's task completion progress for a specific
+        lesson (0-100)
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: lesson_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LessonProgress'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get lesson progress
+      tags:
+      - Progress
   /lessons/{lesson_id}/tasks:
     get:
       description: Get a paginated list of tasks for a lesson
