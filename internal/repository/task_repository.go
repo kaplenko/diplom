@@ -21,7 +21,7 @@ func NewTaskRepository(db *sql.DB) *TaskRepository {
 func (r *TaskRepository) Create(task *models.Task) error {
 	query, args, err := pg.Insert("tasks").
 		Cols("lesson_id", "title", "description", "initial_code", "test_cases", "difficulty").
-		Vals(goqu.Vals{task.LessonID, task.Title, task.Description, task.InitialCode, task.TestCases, task.Difficulty}).
+		Vals(goqu.Vals{task.LessonID, task.Title, task.Description, task.InitialCode, string(task.TestCases), task.Difficulty}).
 		Returning("id", "created_at", "updated_at").
 		Prepared(true).ToSQL()
 	if err != nil {
@@ -62,7 +62,7 @@ func (r *TaskRepository) Update(task *models.Task) error {
 			"title":        task.Title,
 			"description":  task.Description,
 			"initial_code": task.InitialCode,
-			"test_cases":   task.TestCases,
+			"test_cases":   string(task.TestCases),
 			"difficulty":   task.Difficulty,
 			"updated_at":   goqu.L("NOW()"),
 		}).

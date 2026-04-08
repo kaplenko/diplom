@@ -106,7 +106,7 @@ func main() {
 		}
 
 		details = append(details, tr)
-		summary.WriteString(fmt.Sprintf("Test %d: %v\n", i+1, tr.Passed))
+		fmt.Fprintf(&summary, "Test %d: %v\n", i+1, tr.Passed)
 	}
 
 	total := len(in.TestCases)

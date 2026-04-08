@@ -26,7 +26,9 @@ func main() {
 	// config.Load() requires JWT_SECRET; set a dummy value when it is
 	// missing so the seed script can run without a fully configured .env.
 	if os.Getenv("JWT_SECRET") == "" {
-		os.Setenv("JWT_SECRET", "seed-placeholder")
+		if err := os.Setenv("JWT_SECRET", "seed-placeholder"); err != nil {
+			log.Fatalf("Failed to set JWT_SECRET: %v", err)
+		}
 	}
 
 	// Initialise configuration exactly as in the main application.

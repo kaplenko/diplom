@@ -93,8 +93,8 @@ func (r *LessonRepository) ListByCourse(courseID int64, params models.Pagination
 	base := pg.From("lessons").Where(goqu.C("course_id").Eq(courseID))
 
 	countSQL, countArgs, err := base.
-	Select(goqu.COUNT(goqu.Star()))
-	.Prepared(true).ToSQL()
+		Select(goqu.COUNT(goqu.Star())).
+		Prepared(true).ToSQL()
 	if err != nil {
 		return nil, 0, fmt.Errorf("build count query: %w", err)
 	}

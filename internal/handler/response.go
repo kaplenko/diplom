@@ -59,6 +59,13 @@ func parsePagination(c *gin.Context) models.PaginationParams {
 }
 
 func getUserID(c *gin.Context) int64 {
-	id, _ := c.Get("user_id")
-	return id.(int64)
+	id, ok := c.Get("user_id")
+	if !ok {
+		return 0
+	}
+	uid, ok := id.(int64)
+	if !ok {
+		return 0
+	}
+	return uid
 }
