@@ -2,8 +2,11 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"math"
+
+	"github.com/doug-martin/goqu/v9"
 
 	"github.com/kaplenko/diplom/internal/models"
 )
@@ -16,7 +19,6 @@ func NewProgressRepository(db *sql.DB) *ProgressRepository {
 	return &ProgressRepository{db: db}
 }
 
-// pct returns an integer percentage (0-100), rounded to the nearest whole number.
 func pct(completed, total int) int {
 	if total == 0 {
 		return 0
@@ -25,31 +27,53 @@ func pct(completed, total int) int {
 }
 
 func (r *ProgressRepository) MarkCompleted(userID, courseID, lessonID int64) error {
-	query := `
-		INSERT INTO progress (user_id, course_id, lesson_id, completed, completed_at)
-		VALUES ($1, $2, $3, TRUE, NOW())
-		ON CONFLICT (user_id, lesson_id)
-		DO UPDATE SET completed = TRUE, completed_at = NOW()`
+	query, args, err := pg.Insert("progress").
+		Cols("user_id", "course_id", "lesson_id", "completed", "completed_at").
+		Vals(goqu.Vals{userID, courseID, lessonID, true, goqu.L("NOW()")}).
+		OnConflict(goqu.DoUpdate("user_id, lesson_id", goqu.Record{
+			"completed":    true,
+			"completed_at": goqu.L("NOW()"),
+		})).
+		Prepared(true).ToSQL()
+	if err != nil {
+		return fmt.Errorf("build upsert query: %w", err)
+	}
 
-	_, err := r.db.Exec(query, userID, courseID, lessonID)
+	_, err = r.db.Exec(query, args...)
 	return err
 }
 
 func (r *ProgressRepository) GetCourseProgress(userID, courseID int64) (*models.CourseProgress, error) {
-	query := `
-		SELECT
-			c.id,
-			c.title,
-			(SELECT COUNT(*) FROM lessons WHERE course_id = c.id) AS total_lessons,
-			(SELECT COUNT(*) FROM progress WHERE user_id = $1 AND course_id = c.id AND completed = TRUE) AS completed_count
-		FROM courses c
-		WHERE c.id = $2`
+	totalLessons := pg.From("lessons").
+		Select(goqu.COUNT(goqu.Star())).
+		Where(goqu.C("course_id").Eq(goqu.I("c.id")))
+
+	completedCount := pg.From("progress").
+		Select(goqu.COUNT(goqu.Star())).
+		Where(
+			goqu.C("user_id").Eq(userID),
+			goqu.C("course_id").Eq(goqu.I("c.id")),
+			goqu.C("completed").Eq(true),
+		)
+
+	query, args, err := pg.From(goqu.T("courses").As("c")).
+		Select(
+			goqu.I("c.id"),
+			goqu.I("c.title"),
+			totalLessons.As("total_lessons"),
+			completedCount.As("completed_count"),
+		).
+		Where(goqu.I("c.id").Eq(courseID)).
+		Prepared(true).ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("build course progress query: %w", err)
+	}
 
 	cp := &models.CourseProgress{}
-	err := r.db.QueryRow(query, userID, courseID).Scan(
+	err = r.db.QueryRow(query, args...).Scan(
 		&cp.CourseID, &cp.CourseTitle, &cp.TotalLessons, &cp.CompletedCount,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -61,16 +85,32 @@ func (r *ProgressRepository) GetCourseProgress(userID, courseID int64) (*models.
 }
 
 func (r *ProgressRepository) GetAllProgress(userID int64) ([]models.CourseProgress, error) {
-	query := `
-		SELECT
-			c.id,
-			c.title,
-			(SELECT COUNT(*) FROM lessons WHERE course_id = c.id) AS total_lessons,
-			(SELECT COUNT(*) FROM progress WHERE user_id = $1 AND course_id = c.id AND completed = TRUE) AS completed_count
-		FROM courses c
-		ORDER BY c.id ASC`
+	totalLessons := pg.From("lessons").
+		Select(goqu.COUNT(goqu.Star())).
+		Where(goqu.C("course_id").Eq(goqu.I("c.id")))
 
-	rows, err := r.db.Query(query, userID)
+	completedCount := pg.From("progress").
+		Select(goqu.COUNT(goqu.Star())).
+		Where(
+			goqu.C("user_id").Eq(userID),
+			goqu.C("course_id").Eq(goqu.I("c.id")),
+			goqu.C("completed").Eq(true),
+		)
+
+	query, args, err := pg.From(goqu.T("courses").As("c")).
+		Select(
+			goqu.I("c.id"),
+			goqu.I("c.title"),
+			totalLessons.As("total_lessons"),
+			completedCount.As("completed_count"),
+		).
+		Order(goqu.I("c.id").Asc()).
+		Prepared(true).ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("build all progress query: %w", err)
+	}
+
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("get all progress: %w", err)
 	}
@@ -92,24 +132,40 @@ func (r *ProgressRepository) GetAllProgress(userID int64) ([]models.CourseProgre
 // GetLessonProgress returns task-level completion for a single lesson.
 // A task counts as completed when the user has at least one submission with status='passed'.
 func (r *ProgressRepository) GetLessonProgress(userID, lessonID int64) (*models.LessonProgress, error) {
-	query := `
-		SELECT
-			l.id,
-			l.title,
-			(SELECT COUNT(*) FROM tasks WHERE lesson_id = l.id) AS total_tasks,
-			(SELECT COUNT(DISTINCT t.id)
-			   FROM tasks t
-			   JOIN submissions s ON s.task_id = t.id AND s.user_id = $1 AND s.status = 'passed'
-			  WHERE t.lesson_id = l.id
-			) AS completed_tasks
-		FROM lessons l
-		WHERE l.id = $2`
+	totalTasks := pg.From("tasks").
+		Select(goqu.COUNT(goqu.Star())).
+		Where(goqu.C("lesson_id").Eq(goqu.I("l.id")))
+
+	completedTasks := pg.From(goqu.T("tasks").As("t")).
+		Join(
+			goqu.T("submissions").As("s"),
+			goqu.On(
+				goqu.I("s.task_id").Eq(goqu.I("t.id")),
+				goqu.I("s.user_id").Eq(userID),
+				goqu.I("s.status").Eq("passed"),
+			),
+		).
+		Select(goqu.L("COUNT(DISTINCT ?)", goqu.I("t.id"))).
+		Where(goqu.I("t.lesson_id").Eq(goqu.I("l.id")))
+
+	query, args, err := pg.From(goqu.T("lessons").As("l")).
+		Select(
+			goqu.I("l.id"),
+			goqu.I("l.title"),
+			totalTasks.As("total_tasks"),
+			completedTasks.As("completed_tasks"),
+		).
+		Where(goqu.I("l.id").Eq(lessonID)).
+		Prepared(true).ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("build lesson progress query: %w", err)
+	}
 
 	lp := &models.LessonProgress{}
-	err := r.db.QueryRow(query, userID, lessonID).Scan(
+	err = r.db.QueryRow(query, args...).Scan(
 		&lp.LessonID, &lp.LessonTitle, &lp.TotalTasks, &lp.CompletedTasks,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -123,21 +179,37 @@ func (r *ProgressRepository) GetLessonProgress(userID, lessonID int64) (*models.
 // GetCourseLessonProgress returns per-lesson task completion for every
 // lesson in a course — useful for rendering a detailed progress breakdown.
 func (r *ProgressRepository) GetCourseLessonProgress(userID, courseID int64) ([]models.LessonProgress, error) {
-	query := `
-		SELECT
-			l.id,
-			l.title,
-			(SELECT COUNT(*) FROM tasks WHERE lesson_id = l.id) AS total_tasks,
-			(SELECT COUNT(DISTINCT t.id)
-			   FROM tasks t
-			   JOIN submissions s ON s.task_id = t.id AND s.user_id = $1 AND s.status = 'passed'
-			  WHERE t.lesson_id = l.id
-			) AS completed_tasks
-		FROM lessons l
-		WHERE l.course_id = $2
-		ORDER BY l.order_index ASC`
+	totalTasks := pg.From("tasks").
+		Select(goqu.COUNT(goqu.Star())).
+		Where(goqu.C("lesson_id").Eq(goqu.I("l.id")))
 
-	rows, err := r.db.Query(query, userID, courseID)
+	completedTasks := pg.From(goqu.T("tasks").As("t")).
+		Join(
+			goqu.T("submissions").As("s"),
+			goqu.On(
+				goqu.I("s.task_id").Eq(goqu.I("t.id")),
+				goqu.I("s.user_id").Eq(userID),
+				goqu.I("s.status").Eq("passed"),
+			),
+		).
+		Select(goqu.L("COUNT(DISTINCT ?)", goqu.I("t.id"))).
+		Where(goqu.I("t.lesson_id").Eq(goqu.I("l.id")))
+
+	query, args, err := pg.From(goqu.T("lessons").As("l")).
+		Select(
+			goqu.I("l.id"),
+			goqu.I("l.title"),
+			totalTasks.As("total_tasks"),
+			completedTasks.As("completed_tasks"),
+		).
+		Where(goqu.I("l.course_id").Eq(courseID)).
+		Order(goqu.I("l.order_index").Asc()).
+		Prepared(true).ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("build course lesson progress query: %w", err)
+	}
+
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("get course lesson progress: %w", err)
 	}

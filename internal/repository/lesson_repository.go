@@ -2,7 +2,10 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+
+	"github.com/doug-martin/goqu/v9"
 
 	"github.com/kaplenko/diplom/internal/models"
 )
@@ -16,23 +19,33 @@ func NewLessonRepository(db *sql.DB) *LessonRepository {
 }
 
 func (r *LessonRepository) Create(lesson *models.Lesson) error {
-	query := `
-		INSERT INTO lessons (course_id, title, content, order_index)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, created_at, updated_at`
+	query, args, err := pg.Insert("lessons").
+		Cols("course_id", "title", "content", "order_index").
+		Vals(goqu.Vals{lesson.CourseID, lesson.Title, lesson.Content, lesson.OrderIndex}).
+		Returning("id", "created_at", "updated_at").
+		Prepared(true).ToSQL()
+	if err != nil {
+		return fmt.Errorf("build insert query: %w", err)
+	}
 
-	return r.db.QueryRow(query, lesson.CourseID, lesson.Title, lesson.Content, lesson.OrderIndex).
-		Scan(&lesson.ID, &lesson.CreatedAt, &lesson.UpdatedAt)
+	return r.db.QueryRow(query, args...).Scan(&lesson.ID, &lesson.CreatedAt, &lesson.UpdatedAt)
 }
 
 func (r *LessonRepository) GetByID(id int64) (*models.Lesson, error) {
 	l := &models.Lesson{}
-	query := `SELECT id, course_id, title, content, order_index, created_at, updated_at FROM lessons WHERE id = $1`
 
-	err := r.db.QueryRow(query, id).Scan(
+	query, args, err := pg.From("lessons").
+		Select("id", "course_id", "title", "content", "order_index", "created_at", "updated_at").
+		Where(goqu.C("id").Eq(id)).
+		Prepared(true).ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("build select query: %w", err)
+	}
+
+	err = r.db.QueryRow(query, args...).Scan(
 		&l.ID, &l.CourseID, &l.Title, &l.Content, &l.OrderIndex, &l.CreatedAt, &l.UpdatedAt,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -42,34 +55,64 @@ func (r *LessonRepository) GetByID(id int64) (*models.Lesson, error) {
 }
 
 func (r *LessonRepository) Update(lesson *models.Lesson) error {
-	query := `
-		UPDATE lessons SET title = $1, content = $2, order_index = $3, updated_at = NOW()
-		WHERE id = $4
-		RETURNING updated_at`
+	query, args, err := pg.Update("lessons").
+		Set(goqu.Record{
+			"title":       lesson.Title,
+			"content":     lesson.Content,
+			"order_index": lesson.OrderIndex,
+			"updated_at":  goqu.L("NOW()"),
+		}).
+		Where(goqu.C("id").Eq(lesson.ID)).
+		Returning("updated_at").
+		Prepared(true).ToSQL()
+	if err != nil {
+		return fmt.Errorf("build update query: %w", err)
+	}
 
-	return r.db.QueryRow(query, lesson.Title, lesson.Content, lesson.OrderIndex, lesson.ID).
-		Scan(&lesson.UpdatedAt)
+	return r.db.QueryRow(query, args...).Scan(&lesson.UpdatedAt)
 }
 
 func (r *LessonRepository) Delete(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM lessons WHERE id = $1`, id)
+	query, args, err := pg.
+		From("lessons").
+		Delete().
+		Where(goqu.C("id").Eq(id)).
+		Returning("updated_at").
+		Prepared(true).ToSQL()
+	if err != nil {
+		return fmt.Errorf("build delete query: %w", err)
+	}
+
+	_, err = r.db.Exec(query, args...)
 	return err
 }
 
 func (r *LessonRepository) ListByCourse(courseID int64, params models.PaginationParams) ([]models.Lesson, int64, error) {
 	var total int64
 
-	if err := r.db.QueryRow(`SELECT COUNT(*) FROM lessons WHERE course_id = $1`, courseID).Scan(&total); err != nil {
+	base := pg.From("lessons").Where(goqu.C("course_id").Eq(courseID))
+
+	countSQL, countArgs, err := base.
+	Select(goqu.COUNT(goqu.Star()))
+	.Prepared(true).ToSQL()
+	if err != nil {
+		return nil, 0, fmt.Errorf("build count query: %w", err)
+	}
+	if err := r.db.QueryRow(countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count lessons: %w", err)
 	}
 
-	query := `
-		SELECT id, course_id, title, content, order_index, created_at, updated_at
-		FROM lessons WHERE course_id = $1
-		ORDER BY order_index ASC
-		LIMIT $2 OFFSET $3`
+	listSQL, listArgs, err := base.
+		Select("id", "course_id", "title", "content", "order_index", "created_at", "updated_at").
+		Order(goqu.C("order_index").Asc()).
+		Limit(uint(params.PageSize)).
+		Offset(uint(params.Offset())).
+		Prepared(true).ToSQL()
+	if err != nil {
+		return nil, 0, fmt.Errorf("build list query: %w", err)
+	}
 
-	rows, err := r.db.Query(query, courseID, params.PageSize, params.Offset())
+	rows, err := r.db.Query(listSQL, listArgs...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("list lessons: %w", err)
 	}
