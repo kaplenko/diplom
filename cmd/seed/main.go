@@ -43,11 +43,6 @@ func main() {
 	defer db.Close()
 	log.Println("Connected to database")
 
-	// Run migrations so tables exist before seeding.
-	if err := repository.RunMigrations(db, "migrations"); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
-	}
-
 	// Generate a bcrypt hash so the seed users can actually log in.
 	hash, err := bcrypt.GenerateFromPassword([]byte(seedPassword), bcrypt.DefaultCost)
 	if err != nil {

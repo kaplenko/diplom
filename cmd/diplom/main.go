@@ -35,10 +35,6 @@ func main() {
 	}
 	defer db.Close()
 
-	if err := repository.RunMigrations(db, "migrations"); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
-	}
-
 	// Repositories
 	userRepo := repository.NewUserRepository(db)
 	courseRepo := repository.NewCourseRepository(db)

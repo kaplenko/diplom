@@ -107,6 +107,71 @@ INSERT INTO tasks (lesson_id, title, description, initial_code, test_cases, diff
  'medium');
 
 -- ============================================================
+-- Submissions
+--
+-- Statuses: pending, passed, failed.  Score 0-100.
+--
+-- Seed data reference (tasks):
+--   1 = Print Hello World        (lesson 1, easy)
+--   2 = Sum Two Numbers          (lesson 2, easy)
+--   3 = String Length            (lesson 2, easy)
+--   4 = FizzBuzz                 (lesson 3, medium)
+--   5 = Create a Ping Endpoint   (lesson 4, easy)
+--   6 = Path Parameters          (lesson 5, medium)
+--   7 = Query Parameters         (lesson 5, medium)
+-- ============================================================
+
+-- Student (user_id = 2): solved tasks 1-2, failed task 4, has a pending retry
+INSERT INTO submissions (task_id, user_id, code, status, result, score, submitted_at) VALUES
+(1, 2,
+ E'package main\n\nimport "fmt"\n\nfunc main() {\n\tfmt.Println("Hello, World!")\n}',
+ 'passed', 'All tests passed', 100,
+ '2026-03-15 16:20:00+00'),
+(2, 2,
+ E'package main\n\nfunc sum(a, b int) int {\n\treturn a + b\n}',
+ 'passed', 'All tests passed', 100,
+ '2026-03-16 19:00:00+00'),
+(3, 2,
+ E'package main\n\nfunc strLen(s string) int {\n\treturn len(s)\n}',
+ 'passed', 'All tests passed', 100,
+ '2026-03-16 19:30:00+00'),
+(4, 2,
+ E'package main\n\nimport "strconv"\n\nfunc fizzBuzz(n int) string {\n\tif n%3 == 0 { return "Fizz" }\n\treturn strconv.Itoa(n)\n}',
+ 'failed', 'Test 2 failed: expected "Buzz", got "5"', 50,
+ '2026-03-17 10:00:00+00'),
+(4, 2,
+ E'package main\n\nimport "strconv"\n\nfunc fizzBuzz(n int) string {\n\tif n%15 == 0 { return "FizzBuzz" }\n\tif n%3 == 0 { return "Fizz" }\n\tif n%5 == 0 { return "Buzz" }\n\treturn strconv.Itoa(n)\n}',
+ 'pending', '', 0,
+ '2026-03-17 10:15:00+00'),
+(5, 2,
+ E'package main\n\nimport "github.com/gin-gonic/gin"\n\nfunc main() {\n\tr := gin.Default()\n\tr.GET("/ping", func(c *gin.Context) {\n\t\tc.JSON(200, gin.H{"message": "pong"})\n\t})\n\tr.Run()\n}',
+ 'passed', 'All tests passed', 100,
+ '2026-03-20 12:45:00+00');
+
+-- Admin (user_id = 1): solved tasks 1-3, passed task 4, solved task 5
+INSERT INTO submissions (task_id, user_id, code, status, result, score, submitted_at) VALUES
+(1, 1,
+ E'package main\n\nimport "fmt"\n\nfunc main() {\n\tfmt.Println("Hello, World!")\n}',
+ 'passed', 'All tests passed', 100,
+ '2026-03-01 10:15:00+00'),
+(2, 1,
+ E'package main\n\nfunc sum(a, b int) int {\n\treturn a + b\n}',
+ 'passed', 'All tests passed', 100,
+ '2026-03-02 14:45:00+00'),
+(3, 1,
+ E'package main\n\nfunc strLen(s string) int {\n\treturn len(s)\n}',
+ 'passed', 'All tests passed', 100,
+ '2026-03-02 15:00:00+00'),
+(4, 1,
+ E'package main\n\nimport "strconv"\n\nfunc fizzBuzz(n int) string {\n\tif n%15 == 0 { return "FizzBuzz" }\n\tif n%3 == 0 { return "Fizz" }\n\tif n%5 == 0 { return "Buzz" }\n\treturn strconv.Itoa(n)\n}',
+ 'passed', 'All tests passed', 100,
+ '2026-03-03 09:30:00+00'),
+(5, 1,
+ E'package main\n\nimport "github.com/gin-gonic/gin"\n\nfunc main() {\n\tr := gin.Default()\n\tr.GET("/ping", func(c *gin.Context) {\n\t\tc.JSON(200, gin.H{"message": "pong"})\n\t})\n\tr.Run()\n}',
+ 'passed', 'All tests passed', 100,
+ '2026-03-10 11:20:00+00');
+
+-- ============================================================
 -- Progress
 --
 -- Schema: one row per (user, lesson). The course_id is denormalised
