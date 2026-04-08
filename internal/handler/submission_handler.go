@@ -19,8 +19,11 @@ func NewSubmissionHandler(submissionService *service.SubmissionService) *Submiss
 }
 
 // CreateSubmission godoc
-// @Summary      Submit a solution
-// @Description  Submit code for a task
+// @Summary      Submit a solution (async)
+// @Description  Submit code for a task. Returns immediately with status=pending.
+// @Description  The code is evaluated asynchronously in a sandboxed Docker container.
+// @Description  Use GET /submissions/{id} to poll for the result, or connect via
+// @Description  WebSocket at /ws/submissions/{id} for real-time notification.
 // @Tags         Submissions
 // @Accept       json
 // @Produce      json
@@ -56,7 +59,9 @@ func (h *SubmissionHandler) Create(c *gin.Context) {
 
 // GetSubmission godoc
 // @Summary      Get a submission
-// @Description  Get submission by ID
+// @Description  Get submission by ID. Use this endpoint to poll the evaluation result:
+// @Description  if status is still "pending", the evaluation is in progress; once it
+// @Description  changes to "passed" or "failed", the result and score fields are populated.
 // @Tags         Submissions
 // @Produce      json
 // @Security     BearerAuth

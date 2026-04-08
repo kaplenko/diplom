@@ -1009,7 +1009,10 @@ paths:
       - Submissions
   /submissions/{id}:
     get:
-      description: Get submission by ID
+      description: |-
+        Get submission by ID. Use this endpoint to poll the evaluation result:
+        if status is still "pending", the evaluation is in progress; once it
+        changes to "passed" or "failed", the result and score fields are populated.
       parameters:
       - description: Submission ID
         in: path
@@ -1178,7 +1181,11 @@ paths:
     post:
       consumes:
       - application/json
-      description: Submit code for a task
+      description: |-
+        Submit code for a task. Returns immediately with status=pending.
+        The code is evaluated asynchronously in a sandboxed Docker container.
+        Use GET /submissions/{id} to poll for the result, or connect via
+        WebSocket at /ws/submissions/{id} for real-time notification.
       parameters:
       - description: Task ID
         in: path
@@ -1212,7 +1219,7 @@ paths:
             $ref: '#/definitions/models.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Submit a solution
+      summary: Submit a solution (async)
       tags:
       - Submissions
   /users:

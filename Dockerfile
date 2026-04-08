@@ -27,7 +27,7 @@ ENTRYPOINT ["goose", "-dir", "/migrations", "postgres"]
 # ---- Target: runtime (default) ----
 FROM alpine:3.20 AS runtime
 
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata docker-cli
 
 WORKDIR /app
 

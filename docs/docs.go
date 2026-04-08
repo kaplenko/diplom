@@ -1056,7 +1056,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get submission by ID",
+                "description": "Get submission by ID. Use this endpoint to poll the evaluation result:\nif status is still \"pending\", the evaluation is in progress; once it\nchanges to \"passed\" or \"failed\", the result and score fields are populated.",
                 "produces": [
                     "application/json"
                 ],
@@ -1315,7 +1315,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Submit code for a task",
+                "description": "Submit code for a task. Returns immediately with status=pending.\nThe code is evaluated asynchronously in a sandboxed Docker container.\nUse GET /submissions/{id} to poll for the result, or connect via\nWebSocket at /ws/submissions/{id} for real-time notification.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1325,7 +1325,7 @@ const docTemplate = `{
                 "tags": [
                     "Submissions"
                 ],
-                "summary": "Submit a solution",
+                "summary": "Submit a solution (async)",
                 "parameters": [
                     {
                         "type": "integer",

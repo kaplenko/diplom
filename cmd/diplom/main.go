@@ -12,6 +12,7 @@ import (
 	"github.com/kaplenko/diplom/internal/handler"
 	"github.com/kaplenko/diplom/internal/middleware"
 	"github.com/kaplenko/diplom/internal/repository"
+	"github.com/kaplenko/diplom/internal/runner"
 	"github.com/kaplenko/diplom/internal/service"
 )
 
@@ -43,13 +44,22 @@ func main() {
 	submissionRepo := repository.NewSubmissionRepository(db)
 	progressRepo := repository.NewProgressRepository(db)
 
+	// Runner
+	dockerRunner := runner.NewDockerRunner(
+		cfg.Runner.Image,
+		cfg.Runner.Timeout,
+		cfg.Runner.MemoryLimit,
+		cfg.Runner.CPULimit,
+	)
+	notifier := runner.NewSubmissionNotifier()
+
 	// Services
 	authSvc := service.NewAuthService(userRepo, cfg.JWT)
 	userSvc := service.NewUserService(userRepo)
 	courseSvc := service.NewCourseService(courseRepo)
 	lessonSvc := service.NewLessonService(lessonRepo, courseRepo)
 	taskSvc := service.NewTaskService(taskRepo, lessonRepo)
-	submissionSvc := service.NewSubmissionService(submissionRepo, taskRepo)
+	submissionSvc := service.NewSubmissionService(submissionRepo, taskRepo, dockerRunner, notifier)
 	progressSvc := service.NewProgressService(progressRepo)
 
 	// Handlers
@@ -60,12 +70,16 @@ func main() {
 	taskH := handler.NewTaskHandler(taskSvc)
 	submissionH := handler.NewSubmissionHandler(submissionSvc)
 	progressH := handler.NewProgressHandler(progressSvc)
+	wsH := handler.NewWSHandler(submissionSvc, notifier)
 
 	router := gin.Default()
 	router.Use(middleware.RequestLogger())
 
 	// Swagger UI
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// WebSocket endpoint for real-time submission results (no /api/v1 prefix)
+	router.GET("/ws/submissions/:submission_id", wsH.SubmissionWS)
 
 	v1 := router.Group("/api/v1")
 

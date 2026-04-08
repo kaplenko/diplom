@@ -12,6 +12,14 @@ type Config struct {
 	ServerPort string
 	DB         DBConfig
 	JWT        JWTConfig
+	Runner     RunnerConfig
+}
+
+type RunnerConfig struct {
+	Image       string
+	Timeout     int
+	MemoryLimit string
+	CPULimit    string
 }
 
 type DBConfig struct {
@@ -54,6 +62,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("invalid JWT_REFRESH_EXPIRY_DAYS: %w", err)
 	}
 
+	runnerTimeout, err := strconv.Atoi(getEnv("RUNNER_TIMEOUT", "30"))
+	if err != nil {
+		return nil, fmt.Errorf("invalid RUNNER_TIMEOUT: %w", err)
+	}
+
 	cfg := &Config{
 		ServerPort: getEnv("SERVER_PORT", "8080"),
 		DB: DBConfig{
@@ -68,6 +81,12 @@ func Load() (*Config, error) {
 			Secret:            getEnv("JWT_SECRET", ""),
 			AccessExpiryHours: accessExpiry,
 			RefreshExpiryDays: refreshExpiry,
+		},
+		Runner: RunnerConfig{
+			Image:       getEnv("RUNNER_IMAGE", "runner-image:latest"),
+			Timeout:     runnerTimeout,
+			MemoryLimit: getEnv("RUNNER_MEMORY", "256m"),
+			CPULimit:    getEnv("RUNNER_CPU", "0.5"),
 		},
 	}
 
